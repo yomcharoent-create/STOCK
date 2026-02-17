@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Organic Farm</title>
     
     <link rel="preconnect" href="https://script.google.com">
@@ -11,27 +11,18 @@
     <link rel="apple-touch-icon" href="https://i.postimg.cc/x1zXPDk9/images-3.png"> 
     
     <style>
-        /* Reset CSS */
-        * { box-sizing: border-box; }
-
+        /* Reset พื้นฐาน */
         body, html { 
             margin: 0; 
             padding: 0; 
             width: 100%; 
-            height: 100vh; /* ใช้ vh ธรรมดาเพื่อให้เสถียรบน Desktop */
-            overflow: hidden; 
-            background-color: #f0f2f5; /* สีพื้นหลังโทนเดียวกับแอป */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh; /* ใช้ความสูงเต็มจอปกติ */
+            overflow: hidden; /* ซ่อน Scrollbar ของตัว Wrapper (ให้ Iframe จัดการเอง) */
+            background-color: #ffffff;
+            font-family: sans-serif;
         }
 
-        /* Container สำหรับ Iframe */
-        .iframe-container {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-
+        /* Iframe แบบ Clean ที่สุด ไม่มีการย่อ/ขยาย */
         iframe { 
             width: 100%; 
             height: 100%; 
@@ -39,17 +30,9 @@
             display: none; /* ซ่อนก่อนโหลด */
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            
-            /* --- ส่วนปรับสเกล (สำคัญ) --- */
-            /* ถ้ายังรู้สึกว่าหน้าจอใหญ่ไป ให้ลองลดเลขตรง scale เป็น 0.9 หรือ 0.85 ครับ */
-            /* แต่ค่า 1 คือค่ามาตรฐานเท่ากับต้นฉบับครับ */
-            /* transform: scale(1);  */
-            /* transform-origin: 0 0; */
-            /* width: 100%; */
-            /* height: 100%; */
         }
         
-        /* Loading Screen */
+        /* --- Loading Screen (คงเดิม) --- */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #ffffff; display: flex;
@@ -91,9 +74,7 @@
         <a id="fallback-link" href="#" class="fallback-link">คลิกเพื่อเข้าสู่ระบบ</a>
     </div>
 
-    <div class="iframe-container">
-        <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
-    </div>
+    <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
 
     <script>
         const gasUrl = "https://script.google.com/macros/s/AKfycbzS7mi4LMdbYnMUGJJTNwsB-kRC-Lr22ChvkyEAjUMGC16Wvf5xXS1JksVasZysSjt6/exec";
@@ -105,7 +86,6 @@
             const isInApp = /Line|FBAN|FBAV|Instagram|Messenger/i.test(ua);
 
             if (isAndroid && isInApp) {
-                // Logic เดิม: ดีดออกจากแอป Android
                 document.getElementById('status-text').innerText = "กำลังเปิดด้วย Chrome...";
                 const chromeIntent = `intent://${githubUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
                 window.location.href = chromeIntent;
@@ -115,12 +95,9 @@
                     link.style.display = 'inline-block';
                 }, 3500);
             } else {
-                // Logic ปกติ: โหลด Iframe
                 const frame = document.getElementById('app-frame');
                 frame.src = gasUrl;
                 frame.style.display = 'block';
-                
-                // ซ่อน Splash Screen
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.display = 'none';
                 }, 1500);
