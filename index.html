@@ -2,27 +2,46 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Organic Farm</title>
     
-    <!-- เร่งการเชื่อมต่อกับ Google ล่วงหน้า -->
     <link rel="preconnect" href="https://script.google.com">
     <link rel="dns-prefetch" href="https://script.google.com">
-    
     <link rel="icon" type="image/png" href="https://i.postimg.cc/x1zXPDk9/images-3.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/x1zXPDk9/images-3.png"> 
     
     <style>
-        /* เน้นความเบา ไม่โหลด Font ภายนอกในหน้านี้ */
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background-color: #ffffff;
-            font-family: sans-serif;
+        /* Reset CSS เพื่อเคลียร์ค่าเริ่มต้นของ Browser */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* ลบสีเทาเวลาแตะปุ่ม */
         }
+
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            /* ใช้ 100dvh เพื่อให้เต็มจอจริงๆ โดยไม่สนใจ Address Bar */
+            height: 100dvh; 
+            overflow: hidden; /* ห้ามเลื่อนที่ตัว Wrapper หลัก */
+            overscroll-behavior: none; /* ป้องกันการดึงขอบจอเด้ง (Bounce effect) */
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
         iframe { 
-            width: 100%; height: 100%; border: none; display: none; 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+            display: none; /* ซ่อนก่อนโหลดเสร็จ */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
         
+        /* --- ส่วนตกแต่งหน้าโหลด (Splash Screen) --- */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #ffffff; display: flex;
@@ -70,46 +89,48 @@
         <a id="fallback-link" href="#" class="fallback-link">คลิกเพื่อเข้าสู่ระบบ</a>
     </div>
 
-    <!-- Iframe จะยังไม่มี src ในตอนแรกเพื่อป้องกันการโหลดซ้อน -->
     <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
 
     <script>
+        // URL ของ Google Apps Script Web App
         const gasUrl = "https://script.google.com/macros/s/AKfycbzS7mi4LMdbYnMUGJJTNwsB-kRC-Lr22ChvkyEAjUMGC16Wvf5xXS1JksVasZysSjt6/exec";
         const githubUrl = window.location.href;
 
         function checkAndRedirect() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isAndroid = /Android/i.test(ua);
+            // ตรวจสอบว่าเปิดผ่านแอป Social หรือไม่ (Line, FB, IG)
             const isInApp = /Line|FBAN|FBAV|Instagram|Messenger/i.test(ua);
 
             if (isAndroid && isInApp) {
-                // ถ้าอยู่ในแอป Android ให้ดีดออกทันที "โดยไม่โหลด Iframe"
+                // กรณี Android เปิดในแอป: บังคับเปิด Chrome
                 document.getElementById('status-text').innerText = "กำลังเปิดด้วย Chrome...";
                 
+                // Intent Scheme สำหรับ Android
                 const chromeIntent = `intent://${githubUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
                 window.location.href = chromeIntent;
                 
-                //Fallback ปุ่มกด
+                // เผื่อเปิดไม่ได้ ให้ขึ้นปุ่มกดเอง
                 setTimeout(() => {
                     const link = document.getElementById('fallback-link');
                     link.href = githubUrl;
                     link.style.display = 'inline-block';
+                    document.getElementById('status-text').innerText = "หากไม่เปลี่ยนหน้า กรุณากดปุ่มด้านล่าง";
                 }, 3500);
             } else {
-                // ถ้าอยู่ใน Browser ปกติแล้ว ถึงจะเริ่มโหลด Iframe
+                // กรณีปกติ (iOS หรือ Android ที่เปิด Browser แล้ว): โหลด Iframe
                 const frame = document.getElementById('app-frame');
                 frame.src = gasUrl;
                 frame.style.display = 'block';
                 
-                // ซ่อน Splash Screen เมื่อ Iframe เริ่มโหลด (หรือปล่อยให้ตัวหมุนของแอปหลักทำงานต่อ)
-                // ในที่นี้เราจะซ่อนหลังจากผ่านไป 1.5 วินาที เพื่อให้จังหวะเชื่อมต่อกันพอดี
+                // ซ่อน Splash Screen หลังจาก Iframe เริ่มโหลดสักพัก
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.display = 'none';
                 }, 1500);
             }
         }
 
-        // รันทันทีโดยไม่รอ window.onload เพื่อความเร็วสูงสุด
+        // เริ่มทำงานทันที
         checkAndRedirect();
     </script>
 </body>
