@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organic Farm</title>
     
     <link rel="preconnect" href="https://script.google.com">
@@ -11,50 +11,56 @@
     <link rel="apple-touch-icon" href="https://i.postimg.cc/x1zXPDk9/images-3.png"> 
     
     <style>
-        /* Reset CSS เพื่อเคลียร์ค่าเริ่มต้นของ Browser */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* ลบสีเทาเวลาแตะปุ่ม */
-        }
+        /* Reset CSS */
+        * { box-sizing: border-box; }
 
         body, html { 
             margin: 0; 
             padding: 0; 
             width: 100%; 
-            /* ใช้ 100dvh เพื่อให้เต็มจอจริงๆ โดยไม่สนใจ Address Bar */
-            height: 100dvh; 
-            overflow: hidden; /* ห้ามเลื่อนที่ตัว Wrapper หลัก */
-            overscroll-behavior: none; /* ป้องกันการดึงขอบจอเด้ง (Bounce effect) */
-            background-color: #ffffff;
+            height: 100vh; /* ใช้ vh ธรรมดาเพื่อให้เสถียรบน Desktop */
+            overflow: hidden; 
+            background-color: #f0f2f5; /* สีพื้นหลังโทนเดียวกับแอป */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Container สำหรับ Iframe */
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
         }
 
         iframe { 
             width: 100%; 
             height: 100%; 
             border: none; 
-            display: none; /* ซ่อนก่อนโหลดเสร็จ */
+            display: none; /* ซ่อนก่อนโหลด */
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; bottom: 0; right: 0;
+            
+            /* --- ส่วนปรับสเกล (สำคัญ) --- */
+            /* ถ้ายังรู้สึกว่าหน้าจอใหญ่ไป ให้ลองลดเลขตรง scale เป็น 0.9 หรือ 0.85 ครับ */
+            /* แต่ค่า 1 คือค่ามาตรฐานเท่ากับต้นฉบับครับ */
+            /* transform: scale(1);  */
+            /* transform-origin: 0 0; */
+            /* width: 100%; */
+            /* height: 100%; */
         }
         
-        /* --- ส่วนตกแต่งหน้าโหลด (Splash Screen) --- */
+        /* Loading Screen */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #ffffff; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
             z-index: 10000;
         }
-
         .energy-container {
             width: 70%; max-width: 300px; height: 6px;
             background: rgba(0, 0, 0, 0.05); border-radius: 10px;
             overflow: hidden; position: relative; margin-bottom: 20px;
         }
-
         .energy-line {
             width: 100%; height: 100%;
             background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
@@ -62,16 +68,12 @@
             top: 0; left: -100%;
             animation: energy-flow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
-
         @keyframes energy-flow { 0% { left: -100%; } 100% { left: 100%; } }
-
         .loading-text {
             font-size: 1rem; font-weight: 600; color: #27ae60;
             letter-spacing: 1px; animation: pulse 1.5s infinite;
         }
-
         @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-
         .fallback-link {
             margin-top: 30px; color: #27ae60; text-decoration: none;
             border: 2px solid #27ae60; padding: 10px 20px;
@@ -89,48 +91,41 @@
         <a id="fallback-link" href="#" class="fallback-link">คลิกเพื่อเข้าสู่ระบบ</a>
     </div>
 
-    <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
+    <div class="iframe-container">
+        <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
+    </div>
 
     <script>
-        // URL ของ Google Apps Script Web App
         const gasUrl = "https://script.google.com/macros/s/AKfycbzS7mi4LMdbYnMUGJJTNwsB-kRC-Lr22ChvkyEAjUMGC16Wvf5xXS1JksVasZysSjt6/exec";
         const githubUrl = window.location.href;
 
         function checkAndRedirect() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isAndroid = /Android/i.test(ua);
-            // ตรวจสอบว่าเปิดผ่านแอป Social หรือไม่ (Line, FB, IG)
             const isInApp = /Line|FBAN|FBAV|Instagram|Messenger/i.test(ua);
 
             if (isAndroid && isInApp) {
-                // กรณี Android เปิดในแอป: บังคับเปิด Chrome
+                // Logic เดิม: ดีดออกจากแอป Android
                 document.getElementById('status-text').innerText = "กำลังเปิดด้วย Chrome...";
-                
-                // Intent Scheme สำหรับ Android
                 const chromeIntent = `intent://${githubUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
                 window.location.href = chromeIntent;
-                
-                // เผื่อเปิดไม่ได้ ให้ขึ้นปุ่มกดเอง
                 setTimeout(() => {
                     const link = document.getElementById('fallback-link');
                     link.href = githubUrl;
                     link.style.display = 'inline-block';
-                    document.getElementById('status-text').innerText = "หากไม่เปลี่ยนหน้า กรุณากดปุ่มด้านล่าง";
                 }, 3500);
             } else {
-                // กรณีปกติ (iOS หรือ Android ที่เปิด Browser แล้ว): โหลด Iframe
+                // Logic ปกติ: โหลด Iframe
                 const frame = document.getElementById('app-frame');
                 frame.src = gasUrl;
                 frame.style.display = 'block';
                 
-                // ซ่อน Splash Screen หลังจาก Iframe เริ่มโหลดสักพัก
+                // ซ่อน Splash Screen
                 setTimeout(() => {
                     document.getElementById('splash-screen').style.display = 'none';
                 }, 1500);
             }
         }
-
-        // เริ่มทำงานทันที
         checkAndRedirect();
     </script>
 </body>
