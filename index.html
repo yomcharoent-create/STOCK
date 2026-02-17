@@ -2,23 +2,115 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการสต๊อกเส้นไหม</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Organic Farm</title>
     
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/xj5BPVSp/86ac34b8ff9e336da24d7684aa9a8d89.jpg">
+    <!-- เร่งการเชื่อมต่อกับ Google ล่วงหน้า -->
+    <link rel="preconnect" href="https://script.google.com">
+    <link rel="dns-prefetch" href="https://script.google.com">
+    
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/x1zXPDk9/images-3.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/x1zXPDk9/images-3.png"> 
     
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
-        /* เพิ่ม display: block เพื่อแก้ปัญหา scrollbar ซ้อน */
-        iframe { width: 100%; height: 100%; border: none; display: block; }
+        /* เน้นความเบา ไม่โหลด Font ภายนอกในหน้านี้ */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background-color: #ffffff;
+            font-family: sans-serif;
+        }
+        iframe { 
+            width: 100%; height: 100%; border: none; display: none; 
+        }
+        
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10000;
+        }
+
+        .energy-container {
+            width: 70%; max-width: 300px; height: 6px;
+            background: rgba(0, 0, 0, 0.05); border-radius: 10px;
+            overflow: hidden; position: relative; margin-bottom: 20px;
+        }
+
+        .energy-line {
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71, #27ae60);
+            background-size: 200% 100%; position: absolute;
+            top: 0; left: -100%;
+            animation: energy-flow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes energy-flow { 0% { left: -100%; } 100% { left: 100%; } }
+
+        .loading-text {
+            font-size: 1rem; font-weight: 600; color: #27ae60;
+            letter-spacing: 1px; animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+        .fallback-link {
+            margin-top: 30px; color: #27ae60; text-decoration: none;
+            border: 2px solid #27ae60; padding: 10px 20px;
+            border-radius: 50px; font-weight: bold; display: none;
+        }
     </style>
 </head>
 <body>
-    <!-- แก้ไขตรงนี้: เพิ่ม allow="geolocation" เพื่อเปิดสิทธิ์ GPS -->
-    <iframe 
-        src="https://script.google.com/macros/s/AKfycbyj9kT18KvFsK7I-SpumasGc1ZqAD0Hu2FaqKhGezwV1vZqtVCmV-fTQtJsaBd8zlR15Q/exec"
-        allow="geolocation">
-    </iframe>
+
+    <div id="splash-screen">
+        <div class="energy-container">
+            <div class="energy-line"></div>
+        </div>
+        <div class="loading-text" id="status-text">กำลังตรวจสอบการเชื่อมต่อ...</div>
+        <a id="fallback-link" href="#" class="fallback-link">คลิกเพื่อเข้าสู่ระบบ</a>
+    </div>
+
+    <!-- Iframe จะยังไม่มี src ในตอนแรกเพื่อป้องกันการโหลดซ้อน -->
+    <iframe id="app-frame" allow="camera; microphone; geolocation" allowfullscreen></iframe>
+
+    <script>
+        const gasUrl = "https://script.google.com/macros/s/AKfycbzS7mi4LMdbYnMUGJJTNwsB-kRC-Lr22ChvkyEAjUMGC16Wvf5xXS1JksVasZysSjt6/exec";
+        const githubUrl = window.location.href;
+
+        function checkAndRedirect() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isAndroid = /Android/i.test(ua);
+            const isInApp = /Line|FBAN|FBAV|Instagram|Messenger/i.test(ua);
+
+            if (isAndroid && isInApp) {
+                // ถ้าอยู่ในแอป Android ให้ดีดออกทันที "โดยไม่โหลด Iframe"
+                document.getElementById('status-text').innerText = "กำลังเปิดด้วย Chrome...";
+                
+                const chromeIntent = `intent://${githubUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+                window.location.href = chromeIntent;
+                
+                //Fallback ปุ่มกด
+                setTimeout(() => {
+                    const link = document.getElementById('fallback-link');
+                    link.href = githubUrl;
+                    link.style.display = 'inline-block';
+                }, 3500);
+            } else {
+                // ถ้าอยู่ใน Browser ปกติแล้ว ถึงจะเริ่มโหลด Iframe
+                const frame = document.getElementById('app-frame');
+                frame.src = gasUrl;
+                frame.style.display = 'block';
+                
+                // ซ่อน Splash Screen เมื่อ Iframe เริ่มโหลด (หรือปล่อยให้ตัวหมุนของแอปหลักทำงานต่อ)
+                // ในที่นี้เราจะซ่อนหลังจากผ่านไป 1.5 วินาที เพื่อให้จังหวะเชื่อมต่อกันพอดี
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 1500);
+            }
+        }
+
+        // รันทันทีโดยไม่รอ window.onload เพื่อความเร็วสูงสุด
+        checkAndRedirect();
+    </script>
 </body>
 </html>
